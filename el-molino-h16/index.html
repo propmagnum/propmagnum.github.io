@@ -51,6 +51,7 @@ img{max-width:100%;display:block}
 .chip{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 8px;align-self:flex-start;background:var(--accent-soft);color:var(--accent);font-size:.85rem;font-weight:600;padding:7px 12px;border-radius:3px}
 .chip b{font-weight:700;font-variant-numeric:tabular-nums}
 .chip span{font-weight:500;opacity:.85}
+.chip[hidden]{display:none}
 .stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .stat{display:flex;align-items:center;gap:10px;padding:12px 14px;min-width:0;border-top:1px solid var(--line)}
 .stat:nth-child(-n+2){grid-column:span 3;border-top:0;justify-content:center}
@@ -178,7 +179,7 @@ const DATA = {
     "l": "Recámaras + 1 en planta baja"
   },
   "banos": {
-    "n": "5",
+    "n": "4",
     "l": "Baños + 1 medio"
   },
   "autos": {
@@ -188,11 +189,11 @@ const DATA = {
   "ficha": [
     [
       "Recámaras",
-      "4 (1 en planta baja)"
+      "4, todas con baño completo (1 en planta baja)"
     ],
     [
       "Baños",
-      "5 completos y 1 medio"
+      "4 completos y 1 medio"
     ],
     [
       "Estacionamiento",
@@ -211,15 +212,15 @@ const DATA = {
     {
       "titulo": "Planta baja",
       "items": [
-        "Sala y comedor",
-        "Cocina integral con encimeras de mármol, parrilla, campana, horno y amplia isla con doble tarja",
+        "Sala y comedor amplios",
+        "Cocina integral con cubiertas de mármol, parrilla, campana, horno y gran isla con doble tarja",
         "Amplia alacena",
         "Recámara con closet/vestidor y baño completo",
-        "Medio baño",
-        "Amplia terraza techada y jardín trasero",
+        "Medio baño de visitas",
+        "Amplia terraza techada con jardín trasero",
         "Jardinera frontal y pasillos laterales",
         "Cochera techada para 3 autos con closet/bodega",
-        "Escalera con pasamanos de madera y barandilla de cristal templado"
+        "Escalera con pasamanos de madera y barandal de cristal templado"
       ]
     },
     {
@@ -230,18 +231,18 @@ const DATA = {
         "Sala de TV",
         "Closet de blancos",
         "Cuarto de lavado y patio",
-        "Cuarto de servicio con baño"
+        "Cuarto de servicio"
       ]
     }
   ],
   "extras": [
-    "Baños con lavabo en encimera de mármol y cancel de cristal templado",
-    "Aljibe regular y de captación pluvial de 10,000 lts c/u, con bomba sumergible",
+    "Baños con cubierta de mármol y cancel de cristal templado",
+    "2 aljibes de 10,000 lts (regular y de captación pluvial) con bomba sumergible",
     "Hidroneumático de 90 lts y riego automático",
     "Gas estacionario de 300 lts y boiler de 72 lts para 2 servicios",
     "Malla electrificada con alarma, timbre e interfón",
     "Porcelanato de primera, closets y puertas de madera",
-    "Iluminación LED empotrada y luz natural por tragaluz y ventanales"
+    "Iluminación LED empotrada y abundante luz natural por tragaluz y ventanales"
   ],
   "cercanos": [],
   "fotos": 28
@@ -313,6 +314,7 @@ const DATA = {
 const $ = id => document.getElementById(id);
 const mxn = n => "$" + Number(n).toLocaleString("en-US");
 const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ok = v => !(v === null || v === undefined || v === "" || v === "—");
 const renta = DATA.operacion === "renta";
 const pad = i => String(i).padStart(2, "0");
 
@@ -324,8 +326,9 @@ $("ciudad").textContent = DATA.ciudad;
 $("titulo").textContent = DATA.fraccionamiento;
 $("heroImg").alt = DATA.tipo + " en " + DATA.fraccionamiento;
 $("priceLabel").textContent = renta ? "Renta mensual" : "Precio de venta";
-$("price").innerHTML = mxn(DATA.precio) + `<small>${renta ? "MXN / mes" : "MXN"}</small>`;
+$("price").innerHTML = DATA.precio ? mxn(DATA.precio) + `<small>${renta ? "MXN / mes" : "MXN"}</small>` : "A consultar";
 
+const mantTxt = m => m.tipo === "aprox" ? mxn(m.monto) + " MXN aprox." : m.tipo === "mensual" ? mxn(m.monto) + " MXN / mes" : m.tipo === "incluido" ? "Incluido" : "Se paga aparte";
 let chip = "";
 if (!renta && DATA.avaluo) {
   const pct = Math.round((1 - DATA.precio / DATA.avaluo) * 100);
@@ -333,6 +336,7 @@ if (!renta && DATA.avaluo) {
 } else if (renta && DATA.mantenimiento) {
   const m = DATA.mantenimiento;
   if (m.tipo === "aprox") chip = `<span>Mantenimiento</span><b>${mxn(m.monto)} MXN</b><span>aprox.</span>`;
+  if (m.tipo === "mensual") chip = `<span>Mantenimiento</span><b>${mxn(m.monto)} MXN</b><span>/ mes</span>`;
   if (m.tipo === "aparte") chip = `<span>Renta</span><b>${mxn(DATA.precio)}</b><span>+ mantenimiento</span>`;
   if (m.tipo === "incluido") chip = `<b>Mantenimiento incluido</b>`;
 }
@@ -346,22 +350,22 @@ const ic = {
   auto: '<path d="M5 13l1.6-4.3A2 2 0 0 1 8.5 7.4h7a2 2 0 0 1 1.9 1.3L19 13"/><path d="M3.5 13h17v4.5h-17z"/><path d="M5.5 17.5V19M18.5 17.5V19"/><circle cx="7.5" cy="15.2" r=".6"/><circle cx="16.5" cy="15.2" r=".6"/>'
 };
 const lbl = t => esc(t).replace(" + ", "<br>+ ");
+const m2 = v => ok(v) ? v + "<sup> m²</sup>" : "—";
 const stat = (i, n, l) => `<div class="stat"><svg viewBox="0 0 24 24">${i}</svg><div><div class="n">${n}</div><div class="l">${l}</div></div></div>`;
 $("stats").innerHTML =
-  stat(ic.terreno, DATA.terreno + "<sup> m²</sup>", "Terreno") +
-  stat(ic.constr, DATA.construccion + "<sup> m²</sup>", "Construcción") +
+  stat(ic.terreno, m2(DATA.terreno), DATA.tipo === "Departamento" ? "Terreno" : "Terreno") +
+  stat(ic.constr, m2(DATA.construccion), "Construcción") +
   stat(ic.rec, esc(DATA.recamaras.n), lbl(DATA.recamaras.l)) +
   stat(ic.bano, esc(DATA.banos.n), lbl(DATA.banos.l)) +
   stat(ic.auto, esc(DATA.autos.n), lbl(DATA.autos.l));
 
 /* Ficha técnica */
-const rows = [["Operación", renta ? "Renta" : "Venta"], ["Precio", mxn(DATA.precio) + (renta ? " MXN / mes" : " MXN")]];
+const rows = [["Operación", renta ? "Renta" : "Venta"], ["Precio", DATA.precio ? mxn(DATA.precio) + (renta ? " MXN / mes" : " MXN") : "A consultar"]];
 if (!renta && DATA.avaluo) rows.push(["Avalúo", mxn(DATA.avaluo) + " MXN"]);
-if (renta && DATA.mantenimiento) {
-  const m = DATA.mantenimiento;
-  rows.push(["Mantenimiento", m.tipo === "aprox" ? mxn(m.monto) + " MXN aprox." : m.tipo === "incluido" ? "Incluido" : "Se paga aparte"]);
-}
-rows.push(["Terreno", DATA.terreno + " m²"], ["Construcción", DATA.construccion + " m²"], ...DATA.ficha);
+if (renta && DATA.mantenimiento) rows.push(["Mantenimiento", mantTxt(DATA.mantenimiento)]);
+if (ok(DATA.terreno)) rows.push(["Terreno", DATA.terreno + " m²"]);
+if (ok(DATA.construccion)) rows.push(["Construcción", DATA.construccion + " m²"]);
+rows.push(...DATA.ficha);
 $("spec").innerHTML = rows.map(([a, b]) => `<div><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join("");
 $("plantas").innerHTML = DATA.plantas.map(p => `<div><h4>${esc(p.titulo)}</h4><ul>${p.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("");
 if (DATA.extras.length) $("extras").innerHTML = DATA.extras.map(i => `<li>${esc(i)}</li>`).join(""); else $("extrasBox").hidden = true;
@@ -408,14 +412,18 @@ mark();
 
 /* Texto para WhatsApp (se arma solo con los datos) */
 let wa = `🏡 *${DATA.tipo.toUpperCase()} EN ${renta ? "RENTA" : "VENTA"} | ${DATA.fraccionamiento.toUpperCase()}*\n\n`;
-wa += `💰 *${renta ? "Renta" : "Precio"}: ${mxn(DATA.precio)} MXN${renta ? " / mes" : ""}*\n`;
+wa += DATA.precio ? `💰 *${renta ? "Renta" : "Precio"}: ${mxn(DATA.precio)} MXN${renta ? " / mes" : ""}*\n` : `💰 *Precio: a consultar*\n`;
 if (!renta && DATA.avaluo) {
   const pct = Math.round((1 - DATA.precio / DATA.avaluo) * 100);
   wa += `📉 *Avalúo: ${mxn(DATA.avaluo)} MXN*` + (pct > 0 ? ` (aprox. ${pct}% por debajo del avalúo)` : "") + "\n";
 }
-if (renta && DATA.mantenimiento) wa += "🧾 Mantenimiento: " + rows.find(r => r[0] === "Mantenimiento")[1] + "\n";
-wa += `\n📐 *${DATA.construccion} m² de construcción* en ${DATA.terreno} m² de terreno\n`;
-wa += `🛏️ ${DATA.recamaras.n} ${DATA.recamaras.l.toLowerCase()} | 🛁 ${DATA.banos.n} ${DATA.banos.l.toLowerCase()} | 🚗 ${DATA.autos.n} ${DATA.autos.l.toLowerCase()}\n`;
+if (renta && DATA.mantenimiento) wa += "🧾 Mantenimiento: " + mantTxt(DATA.mantenimiento) + "\n";
+if (ok(DATA.construccion) && ok(DATA.terreno)) wa += `\n📐 *${DATA.construccion} m² de construcción* en ${DATA.terreno} m² de terreno\n`;
+else if (ok(DATA.construccion)) wa += `\n📐 *${DATA.construccion} m² de construcción*\n`;
+else if (ok(DATA.terreno)) wa += `\n📐 *${DATA.terreno} m² de terreno*\n`;
+else wa += "\n";
+const waStat = s => ok(s.n) ? `${s.n} ${s.l.toLowerCase()}` : s.l.split(" + ")[0].toLowerCase() + ": por confirmar";
+wa += `🛏️ ${waStat(DATA.recamaras)} | 🛁 ${waStat(DATA.banos)} | 🚗 ${waStat(DATA.autos)}\n`;
 DATA.plantas.forEach(p => { wa += `\n🏠 *${p.titulo}*\n` + p.items.map(i => "- " + i).join("\n") + "\n"; });
 if (DATA.extras.length) wa += "\n✨ *Extras*\n" + DATA.extras.map(i => "- " + i).join("\n") + "\n";
 DATA.ficha.filter(r => /Documentaci|pago/i.test(r[0])).forEach(r => { wa += `\n${/pago/i.test(r[0]) ? "💳" : "📄"} *${r[0]}:* ${r[1]}`; });

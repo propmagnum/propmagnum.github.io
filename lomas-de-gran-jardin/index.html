@@ -190,7 +190,7 @@ const DATA = {
   "ficha": [
     [
       "Recámaras",
-      "4 + estudio"
+      "4, todas con baño completo, + estudio"
     ],
     [
       "Baños",
@@ -215,8 +215,8 @@ const DATA = {
       "items": [
         "Recibidor, sala y comedor",
         "Estudio y jardinera interior",
-        "Cocina integral con encimeras de granito, estufa en isla, horno, campana y amplia alacena",
-        "Medio baño de visitas con encimera de mármol",
+        "Cocina integral con cubiertas de granito, estufa en isla, horno, campana y amplia alacena",
+        "Medio baño de visitas con cubierta de mármol",
         "Sala de TV y cuarto multiusos",
         "Cochera techada para 3 autos con portón eléctrico"
       ]
@@ -225,7 +225,7 @@ const DATA = {
       "titulo": "Recámaras",
       "items": [
         "Recámara principal con amplio vestidor y baño con doble lavabo de mármol",
-        "3 recámaras con closet/vestidor y baño completo con encimera de mármol",
+        "3 recámaras con closet/vestidor y baño completo con cubierta de mármol",
         "Closet de blancos y closet vertedero"
       ]
     },
@@ -240,6 +240,7 @@ const DATA = {
     }
   ],
   "extras": [
+    "Más de 600 m² de construcción con terraza y asador para reuniones",
     "Aljibe de 3,800 lts con bomba sumergible e hidroneumático de 90 lts",
     "Gas estacionario de 300 lts y boiler para 2 servicios",
     "Timbre e interfón",
@@ -318,6 +319,7 @@ const DATA = {
 const $ = id => document.getElementById(id);
 const mxn = n => "$" + Number(n).toLocaleString("en-US");
 const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ok = v => !(v === null || v === undefined || v === "" || v === "—");
 const renta = DATA.operacion === "renta";
 const pad = i => String(i).padStart(2, "0");
 
@@ -329,8 +331,9 @@ $("ciudad").textContent = DATA.ciudad;
 $("titulo").textContent = DATA.fraccionamiento;
 $("heroImg").alt = DATA.tipo + " en " + DATA.fraccionamiento;
 $("priceLabel").textContent = renta ? "Renta mensual" : "Precio de venta";
-$("price").innerHTML = mxn(DATA.precio) + `<small>${renta ? "MXN / mes" : "MXN"}</small>`;
+$("price").innerHTML = DATA.precio ? mxn(DATA.precio) + `<small>${renta ? "MXN / mes" : "MXN"}</small>` : "A consultar";
 
+const mantTxt = m => m.tipo === "aprox" ? mxn(m.monto) + " MXN aprox." : m.tipo === "mensual" ? mxn(m.monto) + " MXN / mes" : m.tipo === "incluido" ? "Incluido" : "Se paga aparte";
 let chip = "";
 if (!renta && DATA.avaluo) {
   const pct = Math.round((1 - DATA.precio / DATA.avaluo) * 100);
@@ -338,6 +341,7 @@ if (!renta && DATA.avaluo) {
 } else if (renta && DATA.mantenimiento) {
   const m = DATA.mantenimiento;
   if (m.tipo === "aprox") chip = `<span>Mantenimiento</span><b>${mxn(m.monto)} MXN</b><span>aprox.</span>`;
+  if (m.tipo === "mensual") chip = `<span>Mantenimiento</span><b>${mxn(m.monto)} MXN</b><span>/ mes</span>`;
   if (m.tipo === "aparte") chip = `<span>Renta</span><b>${mxn(DATA.precio)}</b><span>+ mantenimiento</span>`;
   if (m.tipo === "incluido") chip = `<b>Mantenimiento incluido</b>`;
 }
@@ -350,24 +354,23 @@ const ic = {
   bano: '<path d="M4 12h16v3a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M6 12V5a2 2 0 0 1 4 0"/>',
   auto: '<path d="M5 13l1.6-4.3A2 2 0 0 1 8.5 7.4h7a2 2 0 0 1 1.9 1.3L19 13"/><path d="M3.5 13h17v4.5h-17z"/><path d="M5.5 17.5V19M18.5 17.5V19"/><circle cx="7.5" cy="15.2" r=".6"/><circle cx="16.5" cy="15.2" r=".6"/>'
 };
-const m2 = (v, s) => typeof v === "number" ? v + s : esc(v);
 const lbl = t => esc(t).replace(" + ", "<br>+ ");
+const m2 = v => ok(v) ? v + "<sup> m²</sup>" : "—";
 const stat = (i, n, l) => `<div class="stat"><svg viewBox="0 0 24 24">${i}</svg><div><div class="n">${n}</div><div class="l">${l}</div></div></div>`;
 $("stats").innerHTML =
-  stat(ic.terreno, m2(DATA.terreno, "<sup> m²</sup>"), "Terreno") +
-  stat(ic.constr, m2(DATA.construccion, "<sup> m²</sup>"), "Construcción") +
+  stat(ic.terreno, m2(DATA.terreno), DATA.tipo === "Departamento" ? "Terreno" : "Terreno") +
+  stat(ic.constr, m2(DATA.construccion), "Construcción") +
   stat(ic.rec, esc(DATA.recamaras.n), lbl(DATA.recamaras.l)) +
   stat(ic.bano, esc(DATA.banos.n), lbl(DATA.banos.l)) +
   stat(ic.auto, esc(DATA.autos.n), lbl(DATA.autos.l));
 
 /* Ficha técnica */
-const rows = [["Operación", renta ? "Renta" : "Venta"], ["Precio", mxn(DATA.precio) + (renta ? " MXN / mes" : " MXN")]];
+const rows = [["Operación", renta ? "Renta" : "Venta"], ["Precio", DATA.precio ? mxn(DATA.precio) + (renta ? " MXN / mes" : " MXN") : "A consultar"]];
 if (!renta && DATA.avaluo) rows.push(["Avalúo", mxn(DATA.avaluo) + " MXN"]);
-if (renta && DATA.mantenimiento) {
-  const m = DATA.mantenimiento;
-  rows.push(["Mantenimiento", m.tipo === "aprox" ? mxn(m.monto) + " MXN aprox." : m.tipo === "incluido" ? "Incluido" : "Se paga aparte"]);
-}
-rows.push(["Terreno", m2(DATA.terreno, " m²")], ["Construcción", m2(DATA.construccion, " m²")], ...DATA.ficha);
+if (renta && DATA.mantenimiento) rows.push(["Mantenimiento", mantTxt(DATA.mantenimiento)]);
+if (ok(DATA.terreno)) rows.push(["Terreno", DATA.terreno + " m²"]);
+if (ok(DATA.construccion)) rows.push(["Construcción", DATA.construccion + " m²"]);
+rows.push(...DATA.ficha);
 $("spec").innerHTML = rows.map(([a, b]) => `<div><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join("");
 $("plantas").innerHTML = DATA.plantas.map(p => `<div><h4>${esc(p.titulo)}</h4><ul>${p.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("");
 if (DATA.extras.length) $("extras").innerHTML = DATA.extras.map(i => `<li>${esc(i)}</li>`).join(""); else $("extrasBox").hidden = true;
@@ -414,14 +417,18 @@ mark();
 
 /* Texto para WhatsApp (se arma solo con los datos) */
 let wa = `🏡 *${DATA.tipo.toUpperCase()} EN ${renta ? "RENTA" : "VENTA"} | ${DATA.fraccionamiento.toUpperCase()}*\n\n`;
-wa += `💰 *${renta ? "Renta" : "Precio"}: ${mxn(DATA.precio)} MXN${renta ? " / mes" : ""}*\n`;
+wa += DATA.precio ? `💰 *${renta ? "Renta" : "Precio"}: ${mxn(DATA.precio)} MXN${renta ? " / mes" : ""}*\n` : `💰 *Precio: a consultar*\n`;
 if (!renta && DATA.avaluo) {
   const pct = Math.round((1 - DATA.precio / DATA.avaluo) * 100);
   wa += `📉 *Avalúo: ${mxn(DATA.avaluo)} MXN*` + (pct > 0 ? ` (aprox. ${pct}% por debajo del avalúo)` : "") + "\n";
 }
-if (renta && DATA.mantenimiento) wa += "🧾 Mantenimiento: " + rows.find(r => r[0] === "Mantenimiento")[1] + "\n";
-if (typeof DATA.construccion === "number") wa += `\n📐 *${DATA.construccion} m² de construcción* en ${DATA.terreno} m² de terreno\n`; else wa += "\n";
-wa += `🛏️ ${DATA.recamaras.n} ${DATA.recamaras.l.toLowerCase()} | 🛁 ${DATA.banos.n} ${DATA.banos.l.toLowerCase()} | 🚗 ${DATA.autos.n} ${DATA.autos.l.toLowerCase()}\n`;
+if (renta && DATA.mantenimiento) wa += "🧾 Mantenimiento: " + mantTxt(DATA.mantenimiento) + "\n";
+if (ok(DATA.construccion) && ok(DATA.terreno)) wa += `\n📐 *${DATA.construccion} m² de construcción* en ${DATA.terreno} m² de terreno\n`;
+else if (ok(DATA.construccion)) wa += `\n📐 *${DATA.construccion} m² de construcción*\n`;
+else if (ok(DATA.terreno)) wa += `\n📐 *${DATA.terreno} m² de terreno*\n`;
+else wa += "\n";
+const waStat = s => ok(s.n) ? `${s.n} ${s.l.toLowerCase()}` : s.l.split(" + ")[0].toLowerCase() + ": por confirmar";
+wa += `🛏️ ${waStat(DATA.recamaras)} | 🛁 ${waStat(DATA.banos)} | 🚗 ${waStat(DATA.autos)}\n`;
 DATA.plantas.forEach(p => { wa += `\n🏠 *${p.titulo}*\n` + p.items.map(i => "- " + i).join("\n") + "\n"; });
 if (DATA.extras.length) wa += "\n✨ *Extras*\n" + DATA.extras.map(i => "- " + i).join("\n") + "\n";
 DATA.ficha.filter(r => /Documentaci|pago/i.test(r[0])).forEach(r => { wa += `\n${/pago/i.test(r[0]) ? "💳" : "📄"} *${r[0]}:* ${r[1]}`; });
